@@ -1,0 +1,19 @@
+{
+  "name": "@redact-eye/shared-types",
+  "version": "0.1.0",
+  "description": "Shared type contracts for RedactEye browser agent, vision/privacy engine, and server",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
