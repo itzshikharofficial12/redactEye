@@ -1,0 +1,134 @@
+{
+  "elements": [
+    {
+      "id": "text_1",
+      "type": "text",
+      "tagName": "h1",
+      "text": "Create Account",
+      "bbox": { "x": 510, "y": 90, "width": 260, "height": 40 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_2",
+      "type": "text",
+      "tagName": "label",
+      "text": "Full Name",
+      "bbox": { "x": 440, "y": 150, "width": 90, "height": 20 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "input_1",
+      "type": "input",
+      "tagName": "input",
+      "inputType": "text",
+      "placeholder": "Enter your full name",
+      "ariaLabel": "Full Name",
+      "value": "Alice Example",
+      "bbox": { "x": 440, "y": 175, "width": 400, "height": 44 },
+      "visible": true,
+      "enabled": true,
+      "sensitive": false
+    },
+    {
+      "id": "text_3",
+      "type": "text",
+      "tagName": "label",
+      "text": "Email",
+      "bbox": { "x": 440, "y": 235, "width": 60, "height": 20 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "input_2",
+      "type": "input",
+      "tagName": "input",
+      "inputType": "email",
+      "placeholder": "Enter your email",
+      "ariaLabel": "Email",
+      "value": "alice@example.test",
+      "bbox": { "x": 440, "y": 260, "width": 400, "height": 44 },
+      "visible": true,
+      "enabled": true,
+      "sensitive": false
+    },
+    {
+      "id": "text_4",
+      "type": "text",
+      "tagName": "label",
+      "text": "Phone",
+      "bbox": { "x": 440, "y": 320, "width": 60, "height": 20 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "input_3",
+      "type": "input",
+      "tagName": "input",
+      "inputType": "tel",
+      "placeholder": "Enter your phone number",
+      "ariaLabel": "Phone",
+      "value": "+91-90000-00000",
+      "bbox": { "x": 440, "y": 345, "width": 400, "height": 44 },
+      "visible": true,
+      "enabled": true,
+      "sensitive": false
+    },
+    {
+      "id": "text_5",
+      "type": "text",
+      "tagName": "label",
+      "text": "Password",
+      "bbox": { "x": 440, "y": 405, "width": 80, "height": 20 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "input_4",
+      "type": "input",
+      "tagName": "input",
+      "inputType": "password",
+      "placeholder": "Create a password",
+      "ariaLabel": "Password",
+      "value": "FakeP@ssw0rd456",
+      "bbox": { "x": 440, "y": 430, "width": 400, "height": 44 },
+      "visible": true,
+      "enabled": true,
+      "sensitive": true
+    },
+    {
+      "id": "checkbox_1",
+      "type": "checkbox",
+      "tagName": "input",
+      "inputType": "checkbox",
+      "ariaLabel": "I agree to the Terms of Service",
+      "text": "I agree to the Terms of Service.",
+      "bbox": { "x": 440, "y": 495, "width": 20, "height": 20 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "button_1",
+      "type": "button",
+      "tagName": "button",
+      "role": "button",
+      "text": "Sign Up",
+      "bbox": { "x": 440, "y": 535, "width": 400, "height": 48 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "link_1",
+      "type": "link",
+      "tagName": "a",
+      "role": "link",
+      "text": "Login",
+      "bbox": { "x": 680, "y": 600, "width": 50, "height": 20 },
+      "visible": true,
+      "enabled": true
+    }
+  ],
+  "documentWidth": 1280,
+  "documentHeight": 800
+}
