@@ -1,0 +1,83 @@
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor Files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Node.js & Web
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+.npm/
+.yarn/
+package-lock.json.bak
+
+# Build Artifacts & Bundles
+dist/
+build/
+out/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# Browser Extension Builds
+*.crx
+*.xpi
+*.zip
+
+# Python & FastAPI
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# Large Model Binaries & Weights (do not commit model binaries)
+*.onnx
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.tar.gz
+*.tflite
+*.weights
+
+# Evaluation & Benchmark Outputs / Generated Data
+evaluation/results/*.json
+evaluation/results/*.csv
+!evaluation/results/README.md
+evaluation/datasets/raw/
+!evaluation/datasets/README.md
