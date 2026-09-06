@@ -1,0 +1,22 @@
+{
+  "name": "@redact-eye/vision-engine",
+  "version": "0.1.0",
+  "description": "Local on-device vision inference pipeline for RedactEye (OCR, face detection, UI element detection)",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@redact-eye/shared-types": "file:../shared-types"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

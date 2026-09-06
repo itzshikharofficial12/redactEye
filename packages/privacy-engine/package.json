@@ -1,0 +1,23 @@
+{
+  "name": "@redact-eye/privacy-engine",
+  "version": "0.1.0",
+  "description": "Client-side PII detection, detection fusion, redaction, and DOM sanitization for RedactEye",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@redact-eye/shared-types": "file:../shared-types",
+    "@redact-eye/vision-engine": "file:../vision-engine"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
