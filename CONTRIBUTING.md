@@ -2,7 +2,7 @@
 
 Welcome to the RedactEye project! This repository is organized as a monorepo designed for a three-person team working concurrently with minimal Git merge conflicts.
 
-Please review these guidelines thoroughly before opening branches or submitting pull requests.
+Please review these guidelines and the team's development source of truth in [docs/development-guide.md](docs/development-guide.md) thoroughly before opening branches or submitting pull requests.
 
 ---
 

@@ -113,6 +113,7 @@ Detailed collaboration guidelines are available in [CONTRIBUTING.md](CONTRIBUTIN
 
 All technical documentation, research notes, architecture diagrams, decision records, and API specifications are maintained inside the [`docs/`](docs/) directory:
 
+* [Team Development Guide (`docs/development-guide.md`)](docs/development-guide.md) — Team development source of truth, component specifications, and workflow
 * [`docs/architecture/`](docs/architecture/) — High-level architecture and system design
 * [`docs/research/`](docs/research/) — Research notes, library evaluations, and model comparisons
 * [`docs/privacy/`](docs/privacy/) — Privacy criteria, PII classification, and redaction policies
