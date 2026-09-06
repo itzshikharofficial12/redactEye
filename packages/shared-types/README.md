@@ -57,7 +57,8 @@ Agent Server / VLM (Person 3)
 >
 > **RAW SCREENSHOT / RAW PII MUST NEVER BE SENT TO THE REMOTE AGENT.**
 
-- `BrowserState` and `DOMElement` represent client-side page state. Form `value` attributes may temporarily exist on the client for perception, but must never be transmitted remotely without validation and sanitization.
+- `BrowserState` and `DOMElement` represent client-side page state. Specifically, `DOMElement.value` represents **RAW LOCAL BROWSER DATA** and must never be included in any remote or sanitized context without explicit sanitization.
+- Password fields (e.g. `type="password"`), credentials, card numbers, and other sensitive input values must be removed or replaced before constructing `SanitizedContext`.
 - Screenshots and raw visual images are handled separately as client-side image streams and are strictly filtered by the local privacy engine.
 - `SanitizedContext` contains strictly non-sensitive metadata, sanitized DOM elements, and masked region coordinates. It deliberately excludes `rawScreenshot`, `originalScreenshot`, `rawImage`, or `piiText` fields.
 

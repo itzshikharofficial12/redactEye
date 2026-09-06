@@ -83,7 +83,12 @@ export interface SanitizedContext {
 
   /**
    * Sanitized DOM tree containing only safe structural and interactive elements.
-   * All sensitive inputs/attributes must be pre-sanitized or stripped.
+   *
+   * CRITICAL PRIVACY BOUNDARY:
+   * Must NEVER contain raw `DOMElement.value` strings for sensitive fields.
+   * Password fields (e.g. `type="password"`), credentials, card numbers, and other
+   * sensitive input values must be removed or replaced with safe tokens before
+   * constructing `SanitizedContext`.
    */
   sanitizedDom?: DOMSnapshot;
 

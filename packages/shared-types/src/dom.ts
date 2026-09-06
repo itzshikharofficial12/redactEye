@@ -19,11 +19,12 @@ export type DOMElementType =
 /**
  * Representation of an individual extracted browser DOM element.
  *
- * PRIVACY NOTICE:
- * Do NOT assume that `value` is safe to transmit.
- * While this contract allows capturing `value` locally on the client for perception,
- * all sensitive/PII values must be stripped or redacted by the local privacy engine
- * before any payload leaves the client device.
+ * CRITICAL PRIVACY BOUNDARY:
+ * `DOMElement` holds local browser state extracted on the client machine.
+ * `DOMElement.value` represents RAW LOCAL BROWSER DATA and MUST NOT be included
+ * in any remote or sanitized context without explicit sanitization.
+ * Password fields and other sensitive input values must be removed or replaced
+ * before constructing `SanitizedContext`.
  */
 export interface DOMElement {
   id: string;
@@ -33,6 +34,16 @@ export interface DOMElement {
   text?: string;
   ariaLabel?: string;
   placeholder?: string;
+
+  /**
+   * Raw input or text value of the element extracted locally from the live DOM.
+   *
+   * PRIVACY RULE:
+   * Represents RAW LOCAL BROWSER DATA. This value MUST NOT be transmitted in
+   * any remote or sanitized context without explicit local sanitization.
+   * Password fields (e.g. `type="password"`), credentials, card numbers, and other
+   * sensitive inputs must be stripped or replaced before constructing `SanitizedContext`.
+   */
   value?: string;
   inputType?: string;
 

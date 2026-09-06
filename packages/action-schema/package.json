@@ -1,0 +1,21 @@
+{
+  "name": "@redact-eye/action-schema",
+  "version": "0.1.0",
+  "description": "Validated action schema and runtime validator for RedactEye browser agent interactions",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "test": "node --test test/validation.test.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
