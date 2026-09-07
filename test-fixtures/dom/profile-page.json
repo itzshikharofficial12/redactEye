@@ -1,0 +1,145 @@
+{
+  "elements": [
+    {
+      "id": "container_1",
+      "type": "container",
+      "tagName": "nav",
+      "role": "navigation",
+      "bbox": { "x": 0, "y": 0, "width": 1280, "height": 60 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_1",
+      "type": "text",
+      "tagName": "span",
+      "text": "RedactEye Demo",
+      "bbox": { "x": 60, "y": 15, "width": 180, "height": 30 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "button_1",
+      "type": "button",
+      "tagName": "button",
+      "role": "button",
+      "text": "Logout",
+      "bbox": { "x": 1170, "y": 12, "width": 90, "height": 36 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "image_1",
+      "type": "image",
+      "tagName": "img",
+      "role": "img",
+      "ariaLabel": "Profile photo",
+      "bbox": { "x": 540, "y": 120, "width": 200, "height": 200 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_2",
+      "type": "text",
+      "tagName": "h1",
+      "text": "Alice Example",
+      "bbox": { "x": 510, "y": 340, "width": 260, "height": 42 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_3",
+      "type": "text",
+      "tagName": "span",
+      "text": "Email:",
+      "bbox": { "x": 420, "y": 410, "width": 80, "height": 24 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_4",
+      "type": "text",
+      "tagName": "span",
+      "text": "alice@example.test",
+      "bbox": { "x": 540, "y": 410, "width": 200, "height": 24 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_5",
+      "type": "text",
+      "tagName": "span",
+      "text": "Phone:",
+      "bbox": { "x": 420, "y": 450, "width": 80, "height": 24 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_6",
+      "type": "text",
+      "tagName": "span",
+      "text": "+91-90000-00000",
+      "bbox": { "x": 540, "y": 450, "width": 180, "height": 24 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_7",
+      "type": "text",
+      "tagName": "span",
+      "text": "Date of Birth:",
+      "bbox": { "x": 420, "y": 490, "width": 120, "height": 24 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_8",
+      "type": "text",
+      "tagName": "span",
+      "text": "1990-01-15",
+      "bbox": { "x": 540, "y": 490, "width": 120, "height": 24 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_9",
+      "type": "text",
+      "tagName": "span",
+      "text": "Address:",
+      "bbox": { "x": 420, "y": 530, "width": 80, "height": 24 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "text_10",
+      "type": "text",
+      "tagName": "span",
+      "text": "42 Example Street, Mumbai",
+      "bbox": { "x": 540, "y": 530, "width": 260, "height": 24 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "button_2",
+      "type": "button",
+      "tagName": "button",
+      "role": "button",
+      "text": "Edit Profile",
+      "bbox": { "x": 420, "y": 590, "width": 200, "height": 48 },
+      "visible": true,
+      "enabled": true
+    },
+    {
+      "id": "button_3",
+      "type": "button",
+      "tagName": "button",
+      "role": "button",
+      "text": "Delete Account",
+      "bbox": { "x": 640, "y": 590, "width": 200, "height": 48 },
+      "visible": true,
+      "enabled": true
+    }
+  ],
+  "documentWidth": 1280,
+  "documentHeight": 800
+}
