@@ -1,0 +1,6 @@
+# WXT and build artifacts
+.output/
+.wxt/
+dist/
+node_modules/
+*.tsbuildinfo
