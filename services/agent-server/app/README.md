@@ -6,6 +6,7 @@ This directory contains the Python application code for the `redact-eye-agent-se
 
 > **IMPORTANT:**
 > **RAW SCREENSHOT / RAW PII MUST NEVER be sent to this server.**
+> **Only sanitized context may be provided to a VLM provider.**
 
 The RedactEye Agent Server is strictly designed to operate downstream of the client-side privacy engine (`packages/privacy-engine` and `packages/vision-engine`). All visual and textual inputs received by this service must be pre-sanitized on the client device:
 - No raw screenshots or unmasked pixel data
@@ -29,11 +30,32 @@ app/
 ├── models/
 │   ├── __init__.py   # Models package marker
 │   └── plan.py       # Pydantic schemas for SanitizedContext, PlanRequest, and AgentAction
-└── planner/
-    ├── __init__.py   # Planner package marker and exports
-    ├── base.py       # Planner Protocol, BasePlanner ABC, and dependency injection provider
-    └── mock.py       # Deterministic mock planner and server-side action validation
+├── planner/
+│   ├── __init__.py   # Planner package marker and exports
+│   ├── base.py       # Planner Protocol, BasePlanner ABC, and dependency injection provider
+│   ├── mock.py       # Deterministic mock planner and server-side action validation
+│   └── vlm.py        # VLMPlanner delegating to VLMProvider
+└── vlm/
+    ├── __init__.py   # VLM package marker and exports
+    ├── base.py       # VLMProvider Protocol, VLMPlanOutput model, and VLMProviderError
+    └── mock.py       # Deterministic MockVLMProvider
 ```
+
+## Planner & VLM Architecture
+
+```
+Planner
+ ├── MockPlanner
+ └── VLMPlanner
+       └── VLMProvider
+             └── MockVLMProvider
+```
+
+- **`Planner` Protocol:** High-level planning interface consumed by the API layer (`POST /api/plan`).
+- **`MockPlanner`:** Deterministic baseline planner.
+- **`VLMPlanner`:** Planner implementation that delegates multimodal reasoning to a `VLMProvider` and runs defense-in-depth safety checks.
+- **`VLMProvider` Protocol:** Vendor-agnostic interface for vision-language models. Accepts strictly `SanitizedContext`.
+- **`MockVLMProvider`:** Deterministic provider for development and testing. Real cloud/local VLM providers will be added in a subsequent checkpoint.
 
 ## Current Endpoints
 

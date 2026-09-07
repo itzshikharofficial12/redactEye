@@ -11,7 +11,7 @@ The API layer does not know whether the planner is a mock, a VLM, local, or remo
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, Protocol, Union, runtime_checkable
+from typing import Any, Optional, Protocol, Union, runtime_checkable
 
 from app.models.plan import AgentAction, PlanRequest, SanitizedContext
 
@@ -75,3 +75,11 @@ def reset_planner() -> None:
     """Reset the active planner back to default (lazy initialization)."""
     global _current_planner
     _current_planner = None
+
+
+def create_vlm_planner(provider: Optional[Any] = None) -> Planner:
+    """Factory creating a VLMPlanner instance with an optional custom provider."""
+    from app.planner.vlm import VLMPlanner
+
+    return VLMPlanner(provider=provider)
+
