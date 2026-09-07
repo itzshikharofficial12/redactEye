@@ -362,3 +362,177 @@ def test_plan_request_model_strip_validation() -> None:
         context=build_synthetic_context(),  # type: ignore[arg-type]
     )
     assert req.task == "Click the login button"
+
+
+# ==============================================================================
+# 13. Checkpoint 3 API Integration: Dynamic IDs, Buttons, Select, Type, DI
+# ==============================================================================
+
+def test_api_plan_signup_button() -> None:
+    """Verify POST /api/plan handles signup button tasks dynamically."""
+    ctx = build_synthetic_context()
+    ctx["sanitizedDom"]["elements"] = [
+        {
+            "id": "btn-signup-999",
+            "type": "button",
+            "tagName": "button",
+            "text": "Create Account",
+            "ariaLabel": "Sign up for new account",
+            "bbox": {"x": 10.0, "y": 10.0, "width": 100.0, "height": 30.0},
+            "visible": True,
+            "enabled": True,
+        }
+    ]
+    response = client.post("/api/plan", json={"task": "Click the signup button", "context": ctx})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["action"]["type"] == "click"
+    assert data["action"]["target"]["elementId"] == "btn-signup-999"
+
+
+def test_api_plan_generic_button_continue() -> None:
+    """Verify POST /api/plan matches buttons by visible text/label."""
+    ctx = build_synthetic_context()
+    ctx["sanitizedDom"]["elements"] = [
+        {
+            "id": "btn-continue-step2",
+            "type": "button",
+            "tagName": "button",
+            "text": "Continue",
+            "bbox": {"x": 10.0, "y": 10.0, "width": 100.0, "height": 30.0},
+            "visible": True,
+            "enabled": True,
+        }
+    ]
+    response = client.post("/api/plan", json={"task": "Click the Continue button", "context": ctx})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["action"]["type"] == "click"
+    assert data["action"]["target"]["elementId"] == "btn-continue-step2"
+
+
+def test_api_plan_select_action() -> None:
+    """Verify POST /api/plan produces SelectAction when a select element is present."""
+    ctx = build_synthetic_context()
+    ctx["sanitizedDom"]["elements"].append({
+        "id": "dropdown-country",
+        "type": "select",
+        "tagName": "select",
+        "bbox": {"x": 10.0, "y": 10.0, "width": 100.0, "height": 30.0},
+        "visible": True,
+        "enabled": True,
+    })
+    response = client.post("/api/plan", json={"task": "Select India", "context": ctx})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["action"]["type"] == "select"
+    assert data["action"]["target"]["elementId"] == "dropdown-country"
+    assert data["action"]["value"] == "India"
+
+
+def test_api_plan_select_fails_when_unavailable() -> None:
+    """Verify POST /api/plan returns 422 if select element is missing."""
+    ctx = build_synthetic_context()
+    # Ensure no select element exists
+    ctx["sanitizedDom"]["elements"] = []
+    response = client.post("/api/plan", json={"task": "Select India", "context": ctx})
+    assert response.status_code == 422
+    assert "select element" in response.json().get("detail", "").lower()
+
+
+def test_api_plan_type_action_non_sensitive() -> None:
+    """Verify POST /api/plan produces TypeAction for non-sensitive input."""
+    ctx = build_synthetic_context()
+    ctx["sanitizedDom"]["elements"].append({
+        "id": "site-search-bar",
+        "type": "input",
+        "tagName": "input",
+        "placeholder": "Search articles...",
+        "inputType": "text",
+        "bbox": {"x": 10.0, "y": 10.0, "width": 200.0, "height": 30.0},
+        "visible": True,
+        "enabled": True,
+        "sensitive": False,
+    })
+    response = client.post(
+        "/api/plan",
+        json={"task": "Type hello into the search field", "context": ctx},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["action"]["type"] == "type"
+    assert data["action"]["target"]["elementId"] == "site-search-bar"
+    assert data["action"]["value"] == "hello"
+
+
+def test_api_plan_refuses_typing_into_password_field() -> None:
+    """PRIVACY TEST: Verify POST /api/plan refuses to type into password input fields."""
+    ctx = build_synthetic_context()
+    ctx["sanitizedDom"]["elements"] = [
+        {
+            "id": "user-password",
+            "type": "input",
+            "tagName": "input",
+            "inputType": "password",
+            "bbox": {"x": 10.0, "y": 10.0, "width": 100.0, "height": 30.0},
+            "visible": True,
+            "enabled": True,
+            "sensitive": False,
+        }
+    ]
+    response = client.post(
+        "/api/plan",
+        json={"task": "Type secretpassword into the password field", "context": ctx},
+    )
+    assert response.status_code == 422
+    detail = response.json().get("detail", "")
+    assert "refusing to type into password field" in detail.lower()
+    # Ensure sensitive string is never echoed in error detail
+    assert "secretpassword" not in detail
+
+
+def test_api_plan_refuses_typing_into_sensitive_field() -> None:
+    """PRIVACY TEST: Verify POST /api/plan refuses to type into fields flagged sensitive."""
+    ctx = build_synthetic_context()
+    ctx["sanitizedDom"]["elements"] = [
+        {
+            "id": "ssn-input",
+            "type": "input",
+            "tagName": "input",
+            "inputType": "text",
+            "bbox": {"x": 10.0, "y": 10.0, "width": 100.0, "height": 30.0},
+            "visible": True,
+            "enabled": True,
+            "sensitive": True,
+        }
+    ]
+    response = client.post(
+        "/api/plan",
+        json={"task": "Type 123-45-6789 into ssn", "context": ctx},
+    )
+    assert response.status_code == 422
+    detail = response.json().get("detail", "")
+    assert "refusing to type into sensitive field" in detail.lower()
+    assert "123-45-6789" not in detail
+
+
+def test_api_plan_dependency_injection_override() -> None:
+    """Verify that /api/plan respects FastAPI dependency injection for the Planner abstraction."""
+    from app.planner import BasePlanner, get_planner
+
+    class StubVLMPlanner(BasePlanner):
+        def plan(self, request, context=None):
+            return ScrollAction(type="scroll", direction="up", amount=250.0)
+
+    app.dependency_overrides[get_planner] = lambda: StubVLMPlanner()
+    try:
+        ctx = build_synthetic_context()
+        response = client.post("/api/plan", json={"task": "Any dynamic instruction", "context": ctx})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["action"]["type"] == "scroll"
+        assert data["action"]["direction"] == "up"
+        assert data["action"]["amount"] == 250.0
+    finally:
+        app.dependency_overrides.pop(get_planner, None)
+

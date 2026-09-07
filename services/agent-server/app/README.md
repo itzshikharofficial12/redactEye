@@ -30,7 +30,8 @@ app/
 │   ├── __init__.py   # Models package marker
 │   └── plan.py       # Pydantic schemas for SanitizedContext, PlanRequest, and AgentAction
 └── planner/
-    ├── __init__.py   # Planner package marker
+    ├── __init__.py   # Planner package marker and exports
+    ├── base.py       # Planner Protocol, BasePlanner ABC, and dependency injection provider
     └── mock.py       # Deterministic mock planner and server-side action validation
 ```
 
