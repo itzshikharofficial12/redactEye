@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Local on-device vision inference pipeline for RedactEye (OCR, face detection, UI element detection)",
   "private": true,
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,12 +12,17 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "tsc && node --test test/ocr.test.ts"
   },
   "dependencies": {
-    "@redact-eye/shared-types": "file:../shared-types"
+    "@redact-eye/shared-types": "file:../shared-types",
+    "onnxruntime-web": "^1.21.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
+    "jpeg-js": "^0.4.4",
+    "onnxruntime-node": "^1.21.0",
     "typescript": "^5.7.0"
   }
 }

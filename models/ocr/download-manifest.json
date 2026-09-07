@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "Model weights download manifest for RedactEye OCR pipeline",
+  "models": [
+    {
+      "id": "ocr-det-mobile",
+      "filename": "det.onnx",
+      "architecture": "DBNet Mobile (PaddleOCR v4)",
+      "url": "https://huggingface.co/xberg-io/paddleocr-onnx-models/resolve/main/v2/det/mobile.onnx",
+      "sha256": "c8d9b07063420ce5365c74e42532de48238feeeedcdb7a330b195708bc38a93f",
+      "sizeBytes": 4766440,
+      "inputs": [
+        {
+          "name": "x",
+          "shape": ["1", "3", "H", "W"],
+          "dtype": "float32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fetch_name_0",
+          "shape": ["1", "1", "H", "W"],
+          "dtype": "float32"
+        }
+      ]
+    },
+    {
+      "id": "ocr-rec-en-mobile",
+      "filename": "rec.onnx",
+      "architecture": "SVTR/LCNet English Mobile (PaddleOCR v4)",
+      "url": "https://huggingface.co/xberg-io/paddleocr-onnx-models/resolve/main/v2/rec/en_mobile/model.onnx",
+      "sha256": "70b2450eed39599af6b996c27a2f1a0ef30eeb49f9f66dd3e74f28f652befc89",
+      "sizeBytes": 7843511,
+      "inputs": [
+        {
+          "name": "x",
+          "shape": ["1", "3", "48", "W"],
+          "dtype": "float32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fetch_name_0",
+          "shape": ["1", "seq_len", "438"],
+          "dtype": "float32"
+        }
+      ]
+    }
+  ],
+  "dictionaries": [
+    {
+      "id": "en-dict",
+      "filename": "en_dict.txt",
+      "description": "Character mapping dictionary for English mobile recognition (437 characters + blank token at index 0)",
+      "sha256": "854c6bb3e5a9a8ceac81fa700927e86a8da0e9b329a2846c57fc686be9db93e5",
+      "sizeBytes": 1419
+    }
+  ]
+}
