@@ -160,4 +160,53 @@ test("OCR Pipeline (@redact-eye/vision-engine)", async (t) => {
       "Second invocation text must match"
     );
   });
+
+  await t.test("regression: OcrPipeline.create() throws loudly when dictionary is empty string or empty array", async () => {
+    // Before fix: returned pipeline that silently returned [] on every run
+    // After fix: rejects loudly in create()
+    await assert.rejects(
+      async () => {
+        await OcrPipeline.create({
+          detModel: detModelPath,
+          recModel: recModelPath,
+          dictionary: "",
+          ort,
+        });
+      },
+      /OCR dictionary is empty or failed to load/i
+    );
+
+    await assert.rejects(
+      async () => {
+        await OcrPipeline.create({
+          detModel: detModelPath,
+          recModel: recModelPath,
+          dictionary: [],
+          ort,
+        });
+      },
+      /OCR dictionary is empty or failed to load/i
+    );
+  });
+
+  await t.test("resolves default en_dict.txt relative to module location when dictionary option is omitted", async () => {
+    // Omitting dictionary option tests default resolution from import.meta.url
+    const defaultPipeline = await OcrPipeline.create({
+      detModel: detModelPath,
+      recModel: recModelPath,
+      ort,
+    });
+    assert.ok(defaultPipeline, "Pipeline must initialize successfully with default dictionary");
+
+    const defaultDetections = await defaultPipeline.run({
+      imageData: {
+        data: rawImage.data,
+        width: rawImage.width,
+        height: rawImage.height,
+      },
+      width: rawImage.width,
+      height: rawImage.height,
+    });
+    assert.ok(defaultDetections.length > 0, "Default dictionary must produce valid detections");
+  });
 });

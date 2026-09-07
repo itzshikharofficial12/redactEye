@@ -151,26 +151,41 @@ export class OcrPipeline {
     ]);
 
     // 3. Resolve dictionary
-    let dictionary: readonly string[];
+    let dictionary: readonly string[] = [];
     if (Array.isArray(options.dictionary)) {
       dictionary = options.dictionary;
     } else if (typeof options.dictionary === "string") {
       dictionary = options.dictionary.split(/\r?\n/).filter((l) => l.length > 0);
     } else {
-      // In Node.js environment, attempt to read default en_dict.txt
+      // Resolve default en_dict.txt relative to this module's location, NOT process.cwd()
       try {
         const fs = await import("node:fs");
         const path = await import("node:path");
-        const dictPath = path.resolve("models/ocr/en_dict.txt");
-        if (fs.existsSync(dictPath)) {
+        const { fileURLToPath } = await import("node:url");
+        const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+        const candidatePaths = [
+          path.resolve(moduleDir, "../../../models/ocr/en_dict.txt"),
+          path.resolve(moduleDir, "../../models/ocr/en_dict.txt"),
+        ];
+        const dictPath = candidatePaths.find((p) => fs.existsSync(p));
+        if (dictPath) {
           const raw = fs.readFileSync(dictPath, "utf-8");
           dictionary = raw.split(/\r?\n/).filter((l) => l.length > 0);
         } else {
-          dictionary = [];
+          throw new Error(
+            `Default OCR dictionary (en_dict.txt) not found. Checked: ${candidatePaths.join(", ")}`
+          );
         }
-      } catch {
-        dictionary = [];
+      } catch (err: any) {
+        throw new Error(`Failed to load default OCR dictionary: ${err.message}`);
       }
+    }
+
+    // Fail loudly if dictionary cannot be loaded or is empty
+    if (!dictionary || dictionary.length === 0) {
+      throw new Error(
+        "OCR dictionary is empty or failed to load. OcrPipeline requires a valid non-empty vocabulary dictionary."
+      );
     }
 
     return new OcrPipeline(detSession, recSession, dictionary, ort, options);
