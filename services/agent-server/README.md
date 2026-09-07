@@ -12,82 +12,104 @@ The **RedactEye Agent Server** is a minimal, production-oriented FastAPI backend
 
 ## Current Status & Checkpoint
 
-This service currently implements **Checkpoint 2**: the foundational agent-planning API with Pydantic request validation, a deterministic mock planner, server-side action validation, and health endpoints.
-
-### Current Endpoints
-
-- **`GET /`**
-  Returns service identification, version, and operational status.
-  ```json
-  {
-    "service": "redact-eye-agent-server",
-    "version": "0.1.0",
-    "status": "ok"
-  }
-  ```
-
-- **`GET /api/health`**
-  Liveness and health check endpoint for monitoring and container orchestration.
-  ```json
-  {
-    "status": "ok",
-    "service": "redact-eye-agent-server"
-  }
-  ```
-
-- **`POST /api/plan`**
-  Receives a sanitized browser context and task instruction, and returns the next structured browser action.
-  - **Request Body:** `PlanRequest` (`task: str`, `context: SanitizedContext`)
-  - **Response Body:** `PlanResponse` (`action: AgentAction`)
+This service currently implements **Checkpoint 3**: an extensible, interface-driven planner architecture with:
+- Abstract `Planner` protocol and base class (`app/planner/base.py`)
+- FastAPI dependency injection / provider decoupling the API from planner implementations
+- Deterministic `MockPlanner` with dynamic context-aware target selection
+- Expanded deterministic task support: login, signup, button by visible text, bounded scrolling, select, and privacy-guarded type
+- Strict server-side action validation and security guardrails
+- Comprehensive test coverage for planner unit behavior, API endpoints, and privacy boundaries
 
 ---
 
-## Architecture & Data Flow
+## Architecture & Planner Interface
+
+The agent server architecture strictly separates the API layer, the planning engine, and action execution.
+
+### Current Architecture (Checkpoint 3)
 
 ```
-Local Browser / Extension (Client)
-   │  1. Extract DOM & Capture Screen
-   │  2. Local Privacy Engine sanitizes DOM and blurs visual PII
-   ▼
-SanitizedContext (Strictly zero raw PII / zero raw screenshots)
-   │
-   ▼ HTTP POST /api/plan
-RedactEye Agent Server
-   ├── 1. Pydantic schema validation (extra="forbid" rejects raw fields)
-   ├── 2. Planner reasoning (Deterministic mock planner in Checkpoint 2)
-   ├── 3. Server-side action safety check (blocks arbitrary scripts/schemes)
-   └── 4. Returns structured AgentAction (JSON)
-   │
-   ▼
-Local Browser Extension
-   └── Local Browser Action Executor executes action locally (click, scroll, type, etc.)
+API (POST /api/plan)
+      ↓
+Planner interface (app/planner/base.py: Planner Protocol)
+      ↓
+MockPlanner (app/planner/mock.py: deterministic context-aware matching)
+      ↓
+AgentAction (Pydantic discriminated union)
+      ↓
+Action validation (defense-in-depth safety guardrail)
+      ↓
+Client Browser Extension (local execution)
 ```
 
-### Important Architectural Rules
+### Future Architecture (VLM Integration)
 
-1. **Only Sanitized Context Reaches the Server:** Raw screenshots, binary image buffers, DOMElement `.value` fields, and raw PII are strictly excluded by the schema contract (`extra="forbid"`).
-2. **Current Planner is Deterministic / Mock:** In Checkpoint 2, a deterministic mock planner is used to prove end-to-end contract compliance. A real Vision-Language Model (VLM) will be integrated in subsequent milestones.
-3. **Structured Data Only:** The server generates and returns structured action JSON. It does **NOT** execute any browser action or script on the server.
-4. **Local Browser Execution:** The client-side browser extension remains entirely responsible for executing the returned action locally in the browser tab.
+```
+API (POST /api/plan)
+      ↓
+Planner interface (app/planner/base.py: Planner Protocol)
+      ↓
+VLMPlanner (future multimodal vision-language model integration)
+      ↓
+AgentAction (Pydantic discriminated union)
+      ↓
+Action validation (defense-in-depth safety guardrail)
+      ↓
+Client Browser Extension (local execution)
+```
+
+By decoupling the API layer from the planner implementation via the `Planner` abstraction (`Depends(get_planner)`), a future `VLMPlanner` can seamlessly replace or complement `MockPlanner` without altering route handlers or request/response contracts.
 
 ---
 
-## Privacy & Security Architecture
+## Supported Deterministic Tasks in MockPlanner
 
-1. **No Raw Media Endpoints:** The server does not expose endpoints that accept raw image files, arbitrary file uploads, or multipart screen captures.
-2. **Zero-Body Logging:** Request bodies containing sanitized context are never dumped to stdout, stderr, or persistent log stores.
-3. **Strict Action Guardrails:** Prohibits dangerous actions (`executeScript`, `eval`, `shell`, CSS/XPath execution) and restricts navigation URLs strictly to `http://` and `https://` protocols.
-4. **Downstream Isolation:** The server processes only sanitized abstractions (`SanitizedContext`: redacted text tokens, bounding boxes, and detection metadata).
+`MockPlanner` performs deterministic, context-aware matching against the supplied `SanitizedContext`. It extracts element IDs directly from the client DOM snapshot (never returning hardcoded IDs):
+
+1. **Click Login:**
+   - Tasks: `"Click the login button"`, `"Find the login button and click it"`, `"Click login"`
+   - Inspects `sanitizedDom.elements` for a visible, enabled button matching "login" or "log in" in text, aria-label, or id.
+   - Emits: `ClickAction(type="click", target=ElementTarget(elementId="..."))`.
+2. **Click Signup:**
+   - Tasks: `"Click the signup button"`, `"Click sign up"`, `"Find the signup button"`
+   - Inspects `sanitizedDom.elements` for a visible, enabled button matching "signup", "sign up", or "register".
+   - Emits: `ClickAction(type="click", target=ElementTarget(elementId="..."))`.
+3. **Click Button by Visible Text:**
+   - Tasks: `"Click the Continue button"`, `"Click the Submit button"`, `"Click the Search button"`, `"Click Save"`
+   - Identifies visible and enabled buttons where the label matches element text, aria-label, or id.
+   - Emits: `ClickAction(type="click", target=ElementTarget(elementId="..."))`.
+4. **Scroll Actions (Bounded):**
+   - Tasks: `"Scroll down"`, `"Scroll up"`
+   - Emits: `ScrollAction(type="scroll", direction="down"|"up", amount=500.0)`.
+   - Scroll amount is strictly bounded (between 1 and 1000 pixels).
+5. **Select Action:**
+   - Tasks: `"Select India"`, `"Select option US"`
+   - Inspects DOM for a visible, enabled `<select>` or dropdown element and targets its dynamic ID.
+   - Emits: `SelectAction(type="select", target=ElementTarget(elementId="..."), value="India")`.
+   - Fails safely with HTTP 422 if no suitable select element is present.
+6. **Type Action (Strict Privacy Guardrails):**
+   - Tasks: `"Type hello into the search field"`, `"Type John into username"`
+   - Inspects DOM for a non-sensitive `<input>` or `<textarea>`.
+   - **CRITICAL PRIVACY RULE:** The planner strictly REFUSES to target password fields (`inputType="password"`) or elements flagged `sensitive=True`.
+   - Never leaks sensitive values in planner output, logs, or error details.
 
 ---
 
-## Future Responsibilities (Planned for Subsequent Milestones)
+## Safe Failure Behavior & Security
 
-The following components and capabilities are planned for future checkpoints and are **NOT** implemented yet:
+1. **No Guessing or Invented Elements:** If a targeted element does not exist or is disabled/hidden in the sanitized DOM, the planner raises a controlled `PlannerError` which maps to HTTP 422 Unprocessable Entity.
+2. **Unsupported Tasks:** Unsupported instructions (e.g. `"Delete my account"`, `"Transfer funds"`) fail safely with a controlled HTTP 422 error.
+3. **No Arbitrary Script Execution:** The server schema and validator strictly prohibit `executeScript`, `eval`, `shell`, CSS selectors, and XPath execution.
+4. **Protocol Whitelist:** Navigation actions are restricted strictly to `http://` and `https://` schemes (`javascript:`, `data:`, `file:` are rejected).
+5. **No Execution on Server:** The server ONLY returns structured action JSON. The browser extension retains sole responsibility for executing actions locally in the browser tab.
 
-- **Vision-Language Model (VLM) Integration:** Connecting to hosted/cloud multimodal VLMs to reason over blurred screenshots and structured DOM features.
-- **Dynamic Multi-Step Agent Planning:** Dynamic reasoning loops that decompose complex multi-page workflows into action sequences.
-- **Evaluation Pipeline:** Benchmarks and automated testing against `evaluation/` datasets to quantify accuracy, token usage, latency, and privacy compliance.
+---
+
+## API Endpoints
+
+- **`GET /`**: Service discovery metadata, version, and status.
+- **`GET /api/health`**: Health and liveness probe.
+- **`POST /api/plan`**: Ingestion of `PlanRequest` (`task` and `SanitizedContext`), returning validated `PlanResponse` (`action: AgentAction`).
 
 ---
 
@@ -134,13 +156,11 @@ Or run via the Python entry point:
 python -m app.main
 ```
 
-The interactive OpenAPI documentation will be available at:
+Interactive OpenAPI documentation is available at:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
 ### Configuration Options
-
-Configuration is managed via standard environment variables:
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |
@@ -150,23 +170,17 @@ Configuration is managed via standard environment variables:
 | `PORT` | `8000` | Port binding |
 | `LOG_LEVEL` | `INFO` | Application log level (body logging prohibited) |
 
-Example:
-
-```bash
-PORT=8080 LOG_LEVEL=DEBUG uvicorn app.main:app
-```
-
 ---
 
-## Testing `POST /api/plan` (Synthetic Example)
+## Testing `POST /api/plan` (Synthetic Examples)
 
-You can test the planner using the following synthetic `curl` command:
+### Example 1: Click Button by Visible Text
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/plan" \
   -H "Content-Type: application/json" \
   -d '{
-    "task": "Click the login button",
+    "task": "Click the Continue button",
     "context": {
       "browser": {
         "url": "https://demo.redacteye.local/portal",
@@ -182,12 +196,10 @@ curl -X POST "http://127.0.0.1:8000/api/plan" \
       "sanitizedDom": {
         "elements": [
           {
-            "id": "login-button",
+            "id": "btn-step2-continue",
             "type": "button",
             "tagName": "button",
-            "text": "Log In",
-            "role": "button",
-            "ariaLabel": "Log in to your synthetic account",
+            "text": "Continue",
             "bbox": {
               "x": 120.0,
               "y": 340.0,
@@ -198,43 +210,77 @@ curl -X POST "http://127.0.0.1:8000/api/plan" \
             "enabled": true,
             "sensitive": false
           }
-        ],
-        "documentWidth": 1280.0,
-        "documentHeight": 1800.0
+        ]
       },
-      "sensitiveRegions": [
-        {
-          "id": "synth-mask-01",
-          "type": "password",
-          "bbox": {
-            "x": 120.0,
-            "y": 280.0,
-            "width": 240.0,
-            "height": 32.0
-          },
-          "confidence": 0.99,
-          "sources": ["dom", "ui_model"],
-          "redaction": "mask"
-        }
-      ],
+      "sensitiveRegions": [],
       "statistics": {
-        "totalDetections": 4,
-        "sensitiveDetections": 1,
-        "redactedRegions": 1
+        "totalDetections": 1,
+        "sensitiveDetections": 0,
+        "redactedRegions": 0
       }
     }
   }'
 ```
 
-**Expected Response (HTTP 200):**
+**Response (HTTP 200):**
 
 ```json
 {
   "action": {
     "type": "click",
     "target": {
-      "elementId": "login-button"
+      "elementId": "btn-step2-continue"
     }
+  }
+}
+```
+
+### Example 2: Type into Non-Sensitive Search Input
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/plan" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "Type hello into the search field",
+    "context": {
+      "browser": {
+        "url": "https://demo.redacteye.local/search",
+        "title": "Search",
+        "viewport": { "width": 1280, "height": 800 },
+        "scrollX": 0,
+        "scrollY": 0
+      },
+      "sanitizedDom": {
+        "elements": [
+          {
+            "id": "search-box",
+            "type": "input",
+            "tagName": "input",
+            "placeholder": "Search items...",
+            "inputType": "text",
+            "bbox": { "x": 10, "y": 10, "width": 200, "height": 30 },
+            "visible": true,
+            "enabled": true,
+            "sensitive": false
+          }
+        ]
+      },
+      "sensitiveRegions": [],
+      "statistics": { "totalDetections": 1, "sensitiveDetections": 0, "redactedRegions": 0 }
+    }
+  }'
+```
+
+**Response (HTTP 200):**
+
+```json
+{
+  "action": {
+    "type": "type",
+    "target": {
+      "elementId": "search-box"
+    },
+    "value": "hello"
   }
 }
 ```

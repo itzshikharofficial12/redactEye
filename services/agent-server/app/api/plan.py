@@ -7,13 +7,12 @@ structured action objects. Request bodies, tasks, and context structures
 MUST NEVER be logged.
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.models.plan import PlanRequest, PlanResponse
-from app.planner.mock import MockPlanner, PlannerError, validate_agent_action
+from app.planner import Planner, PlannerError, get_planner, validate_agent_action
 
 router = APIRouter(tags=["plan"])
-planner = MockPlanner()
 
 
 @router.post(
@@ -22,7 +21,10 @@ planner = MockPlanner()
     status_code=status.HTTP_200_OK,
     summary="Generate next structured agent action from sanitized context",
 )
-async def generate_plan(request: PlanRequest) -> PlanResponse:
+async def generate_plan(
+    request: PlanRequest,
+    planner: Planner = Depends(get_planner),
+) -> PlanResponse:
     """Generate a deterministic browser action from pre-sanitized context.
 
     PRIVACY CONTRACT:
