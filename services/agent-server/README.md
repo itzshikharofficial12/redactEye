@@ -5,103 +5,90 @@ The **RedactEye Agent Server** is a minimal, production-oriented FastAPI backend
 > **CRITICAL PRIVACY BOUNDARY:**
 >
 > **RAW SCREENSHOT / RAW PII MUST NEVER be sent to this server.**
+> **Only sanitized context may be provided to a VLM provider.**
 >
-> All redaction, face blurring, text masking, and PII anonymization occur strictly on the client side (in-browser) before any payload leaves the client. This server operates exclusively downstream of the local privacy engine. Under no circumstances will raw screenshots, unmasked DOM trees, or sensitive PII ever be received, stored, or logged by this server.
+> All redaction, face blurring, text masking, and PII anonymization occur strictly on the client side (in-browser) before any payload leaves the client. This server operates exclusively downstream of the local privacy engine. Under no circumstances will raw screenshots, unmasked DOM trees, or sensitive PII ever be received, stored, or logged by this server or forwarded to any VLM provider.
 
 ---
 
 ## Current Status & Checkpoint
 
-This service currently implements **Checkpoint 3**: an extensible, interface-driven planner architecture with:
-- Abstract `Planner` protocol and base class (`app/planner/base.py`)
-- FastAPI dependency injection / provider decoupling the API from planner implementations
-- Deterministic `MockPlanner` with dynamic context-aware target selection
-- Expanded deterministic task support: login, signup, button by visible text, bounded scrolling, select, and privacy-guarded type
-- Strict server-side action validation and security guardrails
-- Comprehensive test coverage for planner unit behavior, API endpoints, and privacy boundaries
+This service currently implements **Checkpoint 4: VLM Planner Architecture**, introducing a vendor-agnostic vision-language model provider interface, `VLMPlanner`, and `MockVLMProvider`.
+
+### Architectural Hierarchy
+
+```
+Planner (app/planner/base.py)
+ ├── MockPlanner (app/planner/mock.py: deterministic local planner, default)
+ └── VLMPlanner (app/planner/vlm.py: multimodal reasoning delegate)
+       └── VLMProvider (app/vlm/base.py: provider interface)
+             └── MockVLMProvider (app/vlm/mock.py: deterministic mock provider)
+```
 
 ---
 
-## Architecture & Planner Interface
-
-The agent server architecture strictly separates the API layer, the planning engine, and action execution.
-
-### Current Architecture (Checkpoint 3)
+## Architecture & Data Flow
 
 ```
-API (POST /api/plan)
-      ↓
+POST /api/plan
+    ↓
 Planner interface (app/planner/base.py: Planner Protocol)
-      ↓
-MockPlanner (app/planner/mock.py: deterministic context-aware matching)
-      ↓
-AgentAction (Pydantic discriminated union)
-      ↓
+    ↓
+VLMPlanner (or MockPlanner)
+    ↓
+VLMProvider (generate_plan)
+    ↓
+structured AgentAction
+    ↓
 Action validation (defense-in-depth safety guardrail)
-      ↓
+    ↓
 Client Browser Extension (local execution)
 ```
 
-### Future Architecture (VLM Integration)
+### Key Architectural Rules
 
-```
-API (POST /api/plan)
-      ↓
-Planner interface (app/planner/base.py: Planner Protocol)
-      ↓
-VLMPlanner (future multimodal vision-language model integration)
-      ↓
-AgentAction (Pydantic discriminated union)
-      ↓
-Action validation (defense-in-depth safety guardrail)
-      ↓
-Client Browser Extension (local execution)
-```
-
-By decoupling the API layer from the planner implementation via the `Planner` abstraction (`Depends(get_planner)`), a future `VLMPlanner` can seamlessly replace or complement `MockPlanner` without altering route handlers or request/response contracts.
+1. **Only Sanitized Context May Reach Providers:** Both `MockPlanner` and `VLMPlanner` (via `VLMProvider`) operate strictly on `SanitizedContext`. Raw screenshots, image byte arrays, unredacted passwords, cookies, session tokens, and raw DOM values are forbidden by the contract (`extra="forbid"`).
+2. **Provider Agnostic:** `VLMProvider` is an abstract protocol with a single method: `generate_plan(context: SanitizedContext, task: str) -> VLMPlanOutput`. It is completely decoupled from specific AI vendors (Gemini, OpenAI, Anthropic, Qwen, etc.).
+3. **Structured Output Only:** Providers return `VLMPlanOutput`, containing a candidate `AgentAction` and optional informational metadata (`explanation`, `confidence`). Free-form code, JavaScript, and shell commands are prohibited.
+4. **Defense-in-Depth Action Validation:** All candidate actions emitted by any planner or provider are validated against the DOM and run through `validate_agent_action`.
+5. **Default Production Planner:** `MockPlanner` remains the default planner at runtime to ensure rock-solid stability and zero external network calls. `VLMPlanner` with `MockVLMProvider` is fully supported and injectible via FastAPI dependency injection or `set_planner`.
+6. **Real Provider Milestone:** Concrete cloud/local VLM connections (e.g. cloud multimodal APIs or ONNX Runtime inference) will be added in a subsequent checkpoint.
 
 ---
 
-## Supported Deterministic Tasks in MockPlanner
+## Supported Task Patterns (MockPlanner & MockVLMProvider)
 
-`MockPlanner` performs deterministic, context-aware matching against the supplied `SanitizedContext`. It extracts element IDs directly from the client DOM snapshot (never returning hardcoded IDs):
+Both planners handle deterministic task patterns dynamically from the supplied sanitized DOM:
 
 1. **Click Login:**
    - Tasks: `"Click the login button"`, `"Find the login button and click it"`, `"Click login"`
-   - Inspects `sanitizedDom.elements` for a visible, enabled button matching "login" or "log in" in text, aria-label, or id.
-   - Emits: `ClickAction(type="click", target=ElementTarget(elementId="..."))`.
+   - Emits: `ClickAction(type="click", target=ElementTarget(elementId="<matched_id>"))`.
 2. **Click Signup:**
    - Tasks: `"Click the signup button"`, `"Click sign up"`, `"Find the signup button"`
-   - Inspects `sanitizedDom.elements` for a visible, enabled button matching "signup", "sign up", or "register".
-   - Emits: `ClickAction(type="click", target=ElementTarget(elementId="..."))`.
+   - Emits: `ClickAction(type="click", target=ElementTarget(elementId="<matched_id>"))`.
 3. **Click Button by Visible Text:**
-   - Tasks: `"Click the Continue button"`, `"Click the Submit button"`, `"Click the Search button"`, `"Click Save"`
-   - Identifies visible and enabled buttons where the label matches element text, aria-label, or id.
-   - Emits: `ClickAction(type="click", target=ElementTarget(elementId="..."))`.
-4. **Scroll Actions (Bounded):**
+   - Tasks: `"Click the Continue button"`, `"Click the Submit button"`, `"Click Search"`, `"Click Save"`
+   - Emits: `ClickAction(type="click", target=ElementTarget(elementId="<matched_id>"))`.
+4. **Bounded Scroll:**
    - Tasks: `"Scroll down"`, `"Scroll up"`
    - Emits: `ScrollAction(type="scroll", direction="down"|"up", amount=500.0)`.
-   - Scroll amount is strictly bounded (between 1 and 1000 pixels).
-5. **Select Action:**
+5. **Select Option:**
    - Tasks: `"Select India"`, `"Select option US"`
-   - Inspects DOM for a visible, enabled `<select>` or dropdown element and targets its dynamic ID.
-   - Emits: `SelectAction(type="select", target=ElementTarget(elementId="..."), value="India")`.
-   - Fails safely with HTTP 422 if no suitable select element is present.
-6. **Type Action (Strict Privacy Guardrails):**
-   - Tasks: `"Type hello into the search field"`, `"Type John into username"`
-   - Inspects DOM for a non-sensitive `<input>` or `<textarea>`.
-   - **CRITICAL PRIVACY RULE:** The planner strictly REFUSES to target password fields (`inputType="password"`) or elements flagged `sensitive=True`.
-   - Never leaks sensitive values in planner output, logs, or error details.
+   - Emits: `SelectAction(type="select", target=ElementTarget(elementId="<select_id>"), value="India")`.
+6. **Type (Non-Sensitive Input Only):**
+   - Tasks: `"Type hello into the search field"`, `"Type into the name field"`
+   - Emits: `TypeAction(type="type", target=ElementTarget(elementId="<input_id>"), value="...")`.
+   - **PRIVACY RULE:** Refuses to type into password fields (`inputType="password"`) or elements marked `sensitive=True`.
 
 ---
 
 ## Safe Failure Behavior & Security
 
-1. **No Guessing or Invented Elements:** If a targeted element does not exist or is disabled/hidden in the sanitized DOM, the planner raises a controlled `PlannerError` which maps to HTTP 422 Unprocessable Entity.
+1. **No Guessing or Invented Targets:** If a targeted element does not exist or is disabled/hidden in the sanitized DOM, the planner raises a controlled `PlannerError` (HTTP 422 Unprocessable Entity).
 2. **Unsupported Tasks:** Unsupported instructions (e.g. `"Delete my account"`, `"Transfer funds"`) fail safely with a controlled HTTP 422 error.
-3. **No Arbitrary Script Execution:** The server schema and validator strictly prohibit `executeScript`, `eval`, `shell`, CSS selectors, and XPath execution.
+3. **No Arbitrary Script Execution:** The schema and validator strictly prohibit `executeScript`, `eval`, `shell`, `command`, CSS selectors, and XPath execution.
 4. **Protocol Whitelist:** Navigation actions are restricted strictly to `http://` and `https://` schemes (`javascript:`, `data:`, `file:` are rejected).
-5. **No Execution on Server:** The server ONLY returns structured action JSON. The browser extension retains sole responsibility for executing actions locally in the browser tab.
+5. **Zero Execution on Server:** The server ONLY returns structured action JSON. The browser extension executes actions locally in the active tab.
 
 ---
 
@@ -174,7 +161,7 @@ Interactive OpenAPI documentation is available at:
 
 ## Testing `POST /api/plan` (Synthetic Examples)
 
-### Example 1: Click Button by Visible Text
+### Example: Click Button by Visible Text
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/plan" \
@@ -231,56 +218,6 @@ curl -X POST "http://127.0.0.1:8000/api/plan" \
     "target": {
       "elementId": "btn-step2-continue"
     }
-  }
-}
-```
-
-### Example 2: Type into Non-Sensitive Search Input
-
-```bash
-curl -X POST "http://127.0.0.1:8000/api/plan" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "task": "Type hello into the search field",
-    "context": {
-      "browser": {
-        "url": "https://demo.redacteye.local/search",
-        "title": "Search",
-        "viewport": { "width": 1280, "height": 800 },
-        "scrollX": 0,
-        "scrollY": 0
-      },
-      "sanitizedDom": {
-        "elements": [
-          {
-            "id": "search-box",
-            "type": "input",
-            "tagName": "input",
-            "placeholder": "Search items...",
-            "inputType": "text",
-            "bbox": { "x": 10, "y": 10, "width": 200, "height": 30 },
-            "visible": true,
-            "enabled": true,
-            "sensitive": false
-          }
-        ]
-      },
-      "sensitiveRegions": [],
-      "statistics": { "totalDetections": 1, "sensitiveDetections": 0, "redactedRegions": 0 }
-    }
-  }'
-```
-
-**Response (HTTP 200):**
-
-```json
-{
-  "action": {
-    "type": "type",
-    "target": {
-      "elementId": "search-box"
-    },
-    "value": "hello"
   }
 }
 ```
