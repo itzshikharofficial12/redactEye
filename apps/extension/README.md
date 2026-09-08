@@ -2,18 +2,24 @@
 
 This application directory houses the Chrome Manifest V3 browser extension for RedactEye, built using **TypeScript**, **React**, and **WXT**.
 
-## Current Status (Checkpoint 6: DOM Extraction + Stable Element IDs)
+## Current Status (Checkpoint 7: Browser State + Local Screenshot Capture)
 
 The extension provides:
 1. **Chrome Side Panel UI Shell:** Persistent, native right-side panel with clean, minimal light styling, composer, task suggestions, and local state management.
 2. **Local DOM Extraction & Element Resolution:** Content script observing active browser pages via `@redact-eye/browser-utils`. Extracts structural `DOMSnapshot` data conforming to `@redact-eye/shared-types`.
 3. **Deterministic Element IDs:** Assigns unique, safe, collision-resistant IDs (`button_submit`, `input_email`) and supports deterministic resolution (`resolveElement(id)`).
+4. **Local Browser State & Visible Screenshot Observation:** Background service worker coordinates observing the current active tab upon receiving `GET_BROWSER_STATE`:
+   - Captures visible-viewport screenshot via `chrome.tabs.captureVisibleTab()`.
+   - Requests sanitized page state (`url`, `title`, `viewport`, `scrollX`, `scrollY`, `dom`) from the active tab's content script.
+   - Combines both into a typed local `BrowserObservation` (`state` + `screenshot`).
 
 > **IMPORTANT SCOPE & PRIVACY NOTICE:**
-> - **Extraction is 100% Local:** DOM extraction occurs entirely inside the browser tab.
+> - **Observation is 100% Local:** Screenshots and DOM snapshots are processed strictly within the extension context and never leave the browser.
+> - **No Screenshot Upload:** Screenshots are captured to local memory only and are never uploaded or sent over the network.
 > - **No Raw Input Values Captured:** User-entered values from inputs and textareas are never collected (`value: undefined`). Passwords and credential fields are flagged as `sensitive: true`.
-> - **No Network Requests:** No data is sent over the network or transmitted to any backend.
-> - **Deferred Features:** Screenshot capture, OCR, privacy/PII redaction engine, and browser action execution are **intentionally deferred to subsequent checkpoints**.
+> - **No Storage/Cookie Access:** Does not read `document.cookie`, `localStorage`, or `sessionStorage`.
+> - **Zero Network Requests:** No data is sent over the network or transmitted to any backend.
+> - **Deferred Features:** OCR, PII detection/redaction, VLM/agent planning, and browser action execution are **intentionally deferred to subsequent checkpoints**.
 
 ---
 
@@ -31,14 +37,15 @@ apps/extension/
 │   │   ├── PrivacyStatus.tsx         # Persistent privacy indicator
 │   │   └── Composer.tsx              # Input field & submission button
 │   └── entrypoints/
-│       ├── background.ts             # Service worker configuring side panel behavior
-│       ├── content.ts                # Content script exposing local DOM snapshot extraction
+│       ├── background.ts             # Service worker handling side panel & GET_BROWSER_STATE
+│       ├── content.ts                # Content script exposing local DOM & browser state
 │       └── sidepanel/
 │           ├── index.html            # Side panel HTML entrypoint
 │           ├── main.tsx              # React mounting script
 │           ├── style.css             # Light, minimal, accessible CSS styles
 │           └── App.tsx               # Root component & local state machine
 ├── tests/
+│   ├── browser-state.test.ts         # Checkpoint 7 browser state, screenshot & coordinator tests
 │   ├── dom-extraction.test.ts        # DOM extraction, security, stability & resolution tests
 │   └── sidepanel.test.tsx            # Side panel UI component tests
 ├── wxt.config.ts                     # WXT Manifest V3 configuration (aliases, permissions)
@@ -50,12 +57,24 @@ apps/extension/
 
 ---
 
-## Manifest V3, Side Panel & Content Script Configuration
+## Manifest V3, Permissions & Messaging Boundary
 
 The extension uses Chrome Manifest V3:
-- `permissions: ["sidePanel"]`: Enables native Chrome Side Panel support.
-- `background.ts`: Calls `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` so clicking the extension toolbar icon opens the persistent right-side panel without a popup.
-- `content.ts`: Injected into web pages (`<all_urls>`) to handle extension-internal runtime messages (`GET_DOM_SNAPSHOT`, `RESOLVE_ELEMENT`).
+- `permissions: ["sidePanel", "activeTab"]`:
+  - `sidePanel`: Native Chrome Side Panel support.
+  - `activeTab`: Allows capturing the visible viewport of the active tab (`captureVisibleTab`) and accessing tab metadata when invoked.
+- `background.ts`:
+  - Configures `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })`.
+  - Handles extension-internal message `GET_BROWSER_STATE`:
+    1. Queries active tab in current window.
+    2. Enforces restrictions on internal browser pages (`chrome://`, `devtools://`, etc.).
+    3. Captures visible viewport screenshot via `chrome.tabs.captureVisibleTab()`.
+    4. Requests local `BrowserState` from the active tab's content script (`GET_BROWSER_STATE`).
+    5. Returns structured `{ success: true, state, screenshot, tabId }` or structured error code.
+- `content.ts`: Injected into web pages (`<all_urls>`) to handle extension-internal runtime messages:
+  - `GET_BROWSER_STATE` $\rightarrow$ returns metadata + `DOMSnapshot`.
+  - `GET_DOM_SNAPSHOT` $\rightarrow$ returns `DOMSnapshot`.
+  - `RESOLVE_ELEMENT` $\rightarrow$ resolves an element ID to live DOM node.
 
 ---
 

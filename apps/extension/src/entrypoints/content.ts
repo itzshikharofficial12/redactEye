@@ -1,4 +1,4 @@
-import { extractDOMSnapshot, resolveElement } from '@redact-eye/browser-utils';
+import { extractDOMSnapshot, resolveElement, getBrowserState } from '@redact-eye/browser-utils';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -8,6 +8,19 @@ export default defineContentScript({
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (!message || typeof message !== 'object') {
         return false;
+      }
+
+      if (message.type === 'GET_BROWSER_STATE') {
+        try {
+          const state = getBrowserState({ doc: document, win: window });
+          sendResponse({ success: true, state });
+        } catch (err) {
+          sendResponse({
+            success: false,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+        return true;
       }
 
       if (message.type === 'GET_DOM_SNAPSHOT') {
