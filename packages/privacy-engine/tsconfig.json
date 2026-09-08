@@ -6,15 +6,13 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
     "strict": true,
     "noEmitOnError": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "@redact-eye/shared-types": ["../shared-types/src/index.ts"]
-    }
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "src/**/*.ts"
