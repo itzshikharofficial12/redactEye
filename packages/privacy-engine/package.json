@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Client-side PII detection, detection fusion, redaction, and DOM sanitization for RedactEye",
   "private": true,
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,7 +12,8 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "tsc && node --test test/*.test.ts"
   },
   "dependencies": {
     "@redact-eye/shared-types": "file:../shared-types",
