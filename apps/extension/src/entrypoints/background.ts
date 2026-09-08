@@ -1,4 +1,4 @@
-import { observeActiveTab } from '@redact-eye/browser-utils';
+import { observeActiveTab, executeBrowserAction } from '@redact-eye/browser-utils';
 import { detectSensitiveRegions } from '@redact-eye/privacy-engine';
 
 export default defineBackground(() => {
@@ -9,8 +9,8 @@ export default defineBackground(() => {
     });
   }
 
-  // Handle extension-internal messaging for local browser observation and privacy detection
-  // Flow: Extension context -> Background -> activeTab observation -> Privacy Engine -> Local Detections
+  // Handle extension-internal messaging for local browser observation, privacy detection, and action execution
+  // Flow: Extension context -> Background -> activeTab -> Action Executor
   chrome.runtime?.onMessage?.addListener((message, _sender, sendResponse) => {
     if (message?.type === 'GET_BROWSER_STATE') {
       observeActiveTab()
@@ -47,6 +47,60 @@ export default defineBackground(() => {
             code: 'UNKNOWN_ERROR',
           });
         });
+      return true;
+    }
+
+    if (message?.type === 'EXECUTE_ACTION' && message.action) {
+      // 1. Navigation actions run at the browser tab level
+      if (message.action.type === 'navigate') {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          const tab = tabs[0];
+          if (!tab || typeof tab.id !== 'number') {
+            return sendResponse({
+              status: 'failure',
+              actionType: 'navigate',
+              errorCode: 'TARGET_NOT_FOUND',
+              message: 'No active tab found for navigation',
+            });
+          }
+          executeBrowserAction(message.action, { tabId: tab.id })
+            .then((result) => sendResponse(result))
+            .catch((err) => {
+              sendResponse({
+                status: 'failure',
+                actionType: 'navigate',
+                errorCode: 'EXECUTION_FAILED',
+                message: err instanceof Error ? err.message : String(err),
+              });
+            });
+        });
+        return true;
+      }
+
+      // 2. DOM actions (click, type, select, scroll) route to active tab content script
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tab = tabs[0];
+        if (!tab || typeof tab.id !== 'number') {
+          return sendResponse({
+            status: 'failure',
+            actionType: message.action.type,
+            errorCode: 'TARGET_NOT_FOUND',
+            message: 'No active tab found for action execution',
+          });
+        }
+
+        chrome.tabs.sendMessage(tab.id, { type: 'EXECUTE_ACTION', action: message.action }, (response) => {
+          if (chrome.runtime?.lastError) {
+            return sendResponse({
+              status: 'failure',
+              actionType: message.action.type,
+              errorCode: 'EXECUTION_FAILED',
+              message: `Failed to communicate with content script: ${chrome.runtime.lastError.message}`,
+            });
+          }
+          sendResponse(response);
+        });
+      });
       return true;
     }
 

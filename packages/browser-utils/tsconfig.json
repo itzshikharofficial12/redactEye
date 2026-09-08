@@ -20,7 +20,8 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@redact-eye/shared-types": ["../shared-types/src/index.ts"]
+      "@redact-eye/shared-types": ["../shared-types/src/index.ts"],
+      "@redact-eye/action-schema": ["../action-schema/src/index.ts"]
     }
   },
   "include": [

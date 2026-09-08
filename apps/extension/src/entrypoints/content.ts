@@ -1,4 +1,9 @@
-import { extractDOMSnapshot, resolveElement, getBrowserState } from '@redact-eye/browser-utils';
+import {
+  extractDOMSnapshot,
+  resolveElement,
+  getBrowserState,
+  executeBrowserAction,
+} from '@redact-eye/browser-utils';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -50,6 +55,20 @@ export default defineContentScript({
             error: err instanceof Error ? err.message : String(err),
           });
         }
+        return true;
+      }
+
+      if (message.type === 'EXECUTE_ACTION' && message.action) {
+        executeBrowserAction(message.action, { doc: document, win: window })
+          .then((result) => sendResponse(result))
+          .catch((err) => {
+            sendResponse({
+              status: 'failure',
+              actionType: message.action?.type || 'unknown',
+              errorCode: 'EXECUTION_FAILED',
+              message: err instanceof Error ? err.message : String(err),
+            });
+          });
         return true;
       }
 
