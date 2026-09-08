@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@redact-eye/action-schema": "file:../action-schema",
     "@redact-eye/shared-types": "file:../shared-types"
   }
 }

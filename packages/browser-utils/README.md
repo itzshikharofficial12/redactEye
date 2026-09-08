@@ -7,6 +7,7 @@ This package provides browser-specific helper functions, local DOM snapshot extr
 - **Local DOM Snapshot Extraction (`extractDOMSnapshot`):** Converts live browser documents into structured `DOMSnapshot` data conforming to `@redact-eye/shared-types`.
 - **Deterministic Stable Element IDs (`generateId` / `ElementIdGenerator`):** Assigns unique, collision-resistant element IDs (e.g. `button_submit`, `input_email`) that remain stable across unrelated DOM modifications.
 - **Element Resolution (`resolveElement`):** Fast, reliable lookup mapping an `elementId` back to the live DOM element.
+- **Safe Browser Action Executor (`executeBrowserAction`):** Executes structured `AgentAction` commands (`click`, `type`, `select`, `scroll`, `navigate`) locally inside Chrome with strict validation and error handling.
 - **Local Browser State Extraction (`getBrowserState`):** Gathers active tab page metadata (`url`, `title`, `viewport`, `scrollX`, `scrollY`) combined with a sanitized `DOMSnapshot`.
 - **Visible Viewport Screenshot Capture (`captureVisibleScreenshot`):** Safely invokes `chrome.tabs.captureVisibleTab` from extension background context to capture only the currently visible viewport.
 - **Active Tab Observation Coordinator (`observeActiveTab`):** Extension background coordinator that queries the active tab, enforces safety on restricted internal pages, captures the visible viewport, requests the DOM state from the content script, and returns a combined `BrowserObservationResult`.
@@ -20,6 +21,7 @@ import {
   getBrowserState,
   captureVisibleScreenshot,
   observeActiveTab,
+  executeBrowserAction,
 } from '@redact-eye/browser-utils';
 
 // 1. In Content Script: Extract complete local browser state
@@ -37,13 +39,28 @@ if (observation.success) {
 
 // 3. Resolve an element by ID later for action targeting
 const targetEl = resolveElement('button_submit', document);
+
+// 4. Safely execute a structured browser action
+const actionResult = await executeBrowserAction(
+  { type: 'click', target: { elementId: 'btn_submit' } },
+  { doc: document, win: window }
+);
+if (actionResult.status === 'success') {
+  console.log('Action succeeded:', actionResult.actionType);
+} else {
+  console.error('Action failed:', actionResult.errorCode, actionResult.message);
+}
 ```
 
 ## Privacy & Security Guarantees
 
-- **100% Local Observation:** Screenshots and DOM snapshots are processed strictly in-memory on the local machine.
+- **100% Local Execution & Observation:** Actions, screenshots, and DOM snapshots are processed strictly in-memory on the local machine.
+- **No Arbitrary Code Execution:** The action executor rejects all `executeScript`, `eval`, arbitrary JS strings, raw selectors, XPath strings, or shell commands. Only validated, structured `AgentAction` objects are accepted.
+- **Zero Input Value Logging or Leaks:** Typed values are never logged, persisted, or returned in error messages/telemetry.
+- **Navigation Scheme Safety:** Navigation only accepts validated `http:` and `https:` URLs; dangerous protocols (`javascript:`, `file:`, `data:`, `chrome:`, `chrome-extension:`) are rejected.
 - **No Screenshot Transmission:** Screenshots are never uploaded, sent over the network, or exposed to unprivileged webpage scripts.
 - **No Value Extraction:** Raw user input values from inputs and textareas are never collected (`value: undefined`).
 - **Sensitive Control Flagging:** Password inputs and credential fields are marked with `sensitive: true`.
 - **Zero Storage Ingestion:** Does NOT read `document.cookie`, `localStorage`, or `sessionStorage`.
 - **Zero Network Code:** This package contains zero networking code (`fetch`, `XMLHttpRequest`, `WebSocket` are completely absent).
+

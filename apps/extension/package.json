@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@redact-eye/action-schema": "file:../../packages/action-schema",
     "@redact-eye/browser-utils": "file:../../packages/browser-utils",
     "@redact-eye/privacy-engine": "file:../../packages/privacy-engine",
     "@redact-eye/shared-types": "file:../../packages/shared-types",
