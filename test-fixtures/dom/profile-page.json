@@ -5,7 +5,7 @@
       "type": "container",
       "tagName": "nav",
       "role": "navigation",
-      "bbox": { "x": 0, "y": 0, "width": 1280, "height": 60 },
+      "bbox": { "x": 0, "y": 0, "width": 1376, "height": 66 },
       "visible": true,
       "enabled": true
     },
@@ -14,7 +14,7 @@
       "type": "text",
       "tagName": "span",
       "text": "RedactEye Demo",
-      "bbox": { "x": 60, "y": 15, "width": 180, "height": 30 },
+      "bbox": { "x": 59, "y": 16, "width": 191, "height": 32 },
       "visible": true,
       "enabled": true
     },
@@ -24,7 +24,7 @@
       "tagName": "button",
       "role": "button",
       "text": "Logout",
-      "bbox": { "x": 1170, "y": 12, "width": 90, "height": 36 },
+      "bbox": { "x": 1250, "y": 10, "width": 110, "height": 45 },
       "visible": true,
       "enabled": true
     },
@@ -34,7 +34,7 @@
       "tagName": "img",
       "role": "img",
       "ariaLabel": "Profile photo",
-      "bbox": { "x": 540, "y": 120, "width": 200, "height": 200 },
+      "bbox": { "x": 598, "y": 120, "width": 180, "height": 215 },
       "visible": true,
       "enabled": true
     },
@@ -43,7 +43,7 @@
       "type": "text",
       "tagName": "h1",
       "text": "Alice Example",
-      "bbox": { "x": 510, "y": 340, "width": 260, "height": 42 },
+      "bbox": { "x": 568, "y": 348, "width": 240, "height": 48 },
       "visible": true,
       "enabled": true
     },
@@ -52,7 +52,7 @@
       "type": "text",
       "tagName": "span",
       "text": "Email:",
-      "bbox": { "x": 420, "y": 410, "width": 80, "height": 24 },
+      "bbox": { "x": 497, "y": 418, "width": 66, "height": 24 },
       "visible": true,
       "enabled": true
     },
@@ -61,7 +61,7 @@
       "type": "text",
       "tagName": "span",
       "text": "alice@example.test",
-      "bbox": { "x": 540, "y": 410, "width": 200, "height": 24 },
+      "bbox": { "x": 631, "y": 418, "width": 180, "height": 24 },
       "visible": true,
       "enabled": true
     },
@@ -70,7 +70,7 @@
       "type": "text",
       "tagName": "span",
       "text": "Phone:",
-      "bbox": { "x": 420, "y": 450, "width": 80, "height": 24 },
+      "bbox": { "x": 497, "y": 460, "width": 75, "height": 24 },
       "visible": true,
       "enabled": true
     },
@@ -79,7 +79,7 @@
       "type": "text",
       "tagName": "span",
       "text": "+91-90000-00000",
-      "bbox": { "x": 540, "y": 450, "width": 180, "height": 24 },
+      "bbox": { "x": 632, "y": 460, "width": 175, "height": 24 },
       "visible": true,
       "enabled": true
     },
@@ -88,7 +88,7 @@
       "type": "text",
       "tagName": "span",
       "text": "Date of Birth:",
-      "bbox": { "x": 420, "y": 490, "width": 120, "height": 24 },
+      "bbox": { "x": 497, "y": 503, "width": 120, "height": 24 },
       "visible": true,
       "enabled": true
     },
@@ -97,7 +97,7 @@
       "type": "text",
       "tagName": "span",
       "text": "1990-01-15",
-      "bbox": { "x": 540, "y": 490, "width": 120, "height": 24 },
+      "bbox": { "x": 629, "y": 503, "width": 120, "height": 24 },
       "visible": true,
       "enabled": true
     },
@@ -106,7 +106,7 @@
       "type": "text",
       "tagName": "span",
       "text": "Address:",
-      "bbox": { "x": 420, "y": 530, "width": 80, "height": 24 },
+      "bbox": { "x": 496, "y": 545, "width": 80, "height": 24 },
       "visible": true,
       "enabled": true
     },
@@ -115,7 +115,7 @@
       "type": "text",
       "tagName": "span",
       "text": "42 Example Street, Mumbai",
-      "bbox": { "x": 540, "y": 530, "width": 260, "height": 24 },
+      "bbox": { "x": 632, "y": 545, "width": 245, "height": 24 },
       "visible": true,
       "enabled": true
     },
@@ -125,7 +125,7 @@
       "tagName": "button",
       "role": "button",
       "text": "Edit Profile",
-      "bbox": { "x": 420, "y": 590, "width": 200, "height": 48 },
+      "bbox": { "x": 518, "y": 602, "width": 145, "height": 48 },
       "visible": true,
       "enabled": true
     },
@@ -135,11 +135,11 @@
       "tagName": "button",
       "role": "button",
       "text": "Delete Account",
-      "bbox": { "x": 640, "y": 590, "width": 200, "height": 48 },
+      "bbox": { "x": 690, "y": 602, "width": 185, "height": 48 },
       "visible": true,
       "enabled": true
     }
   ],
-  "documentWidth": 1280,
-  "documentHeight": 800
+  "documentWidth": 1376,
+  "documentHeight": 768
 }
