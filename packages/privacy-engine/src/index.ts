@@ -8,3 +8,4 @@ export * from "./detectPII";
 export * from "./fuse";
 export * from "./redact";
 export * from "./sanitizeDom";
+export * from "./privacyGuard";
