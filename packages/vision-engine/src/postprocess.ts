@@ -141,14 +141,14 @@ export function extractBoxesFromHeatmap(
       const origW = Math.min(origWidth - origX, (x1 - x0) / scaleX);
       const origH = Math.min(origHeight - origY, (y1 - y0) / scaleY);
 
-      if (origW >= 3 && origH >= 3) {
+      const finalX = Math.max(0, Math.min(origWidth, Math.round(origX)));
+      const finalY = Math.max(0, Math.min(origHeight, Math.round(origY)));
+      const finalW = Math.max(0, Math.min(origWidth - finalX, Math.round(origW)));
+      const finalH = Math.max(0, Math.min(origHeight - finalY, Math.round(origH)));
+
+      if (finalW >= 3 && finalH >= 3) {
         regions.push({
-          bbox: {
-            x: Math.round(origX),
-            y: Math.round(origY),
-            width: Math.round(origW),
-            height: Math.round(origH),
-          },
+          bbox: { x: finalX, y: finalY, width: finalW, height: finalH },
           score: Math.min(1.0, Math.max(0.0, meanScore)),
         });
       }

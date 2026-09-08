@@ -13,7 +13,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "test": "tsc && node --test test/ocr.test.ts"
+    "test": "tsc && node --test test/ocr.test.ts test/face.test.ts"
   },
   "dependencies": {
     "@redact-eye/shared-types": "file:../shared-types",
