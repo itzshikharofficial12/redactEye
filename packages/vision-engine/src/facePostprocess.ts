@@ -68,10 +68,10 @@ export function filterAndDecodeBoxes(
     const clampedXMax = Math.max(0, Math.min(origWidth, pixelXMax));
     const clampedYMax = Math.max(0, Math.min(origHeight, pixelYMax));
 
-    const x = Math.round(clampedXMin);
-    const y = Math.round(clampedYMin);
-    const w = Math.round(clampedXMax - clampedXMin);
-    const h = Math.round(clampedYMax - clampedYMin);
+    const x = Math.max(0, Math.min(origWidth, Math.round(clampedXMin)));
+    const y = Math.max(0, Math.min(origHeight, Math.round(clampedYMin)));
+    const w = Math.max(0, Math.min(origWidth - x, Math.round(clampedXMax - clampedXMin)));
+    const h = Math.max(0, Math.min(origHeight - y, Math.round(clampedYMax - clampedYMin)));
 
     if (w > 0 && h > 0) {
       candidates.push({
