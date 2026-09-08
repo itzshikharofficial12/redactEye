@@ -2,24 +2,24 @@
 
 This application directory houses the Chrome Manifest V3 browser extension for RedactEye, built using **TypeScript**, **React**, and **WXT**.
 
-## Current Status (Checkpoint 7: Browser State + Local Screenshot Capture)
+## Current Status (Checkpoint 8: Local Privacy Engine Foundation + DOM-Based PII Detection)
 
 The extension provides:
 1. **Chrome Side Panel UI Shell:** Persistent, native right-side panel with clean, minimal light styling, composer, task suggestions, and local state management.
 2. **Local DOM Extraction & Element Resolution:** Content script observing active browser pages via `@redact-eye/browser-utils`. Extracts structural `DOMSnapshot` data conforming to `@redact-eye/shared-types`.
 3. **Deterministic Element IDs:** Assigns unique, safe, collision-resistant IDs (`button_submit`, `input_email`) and supports deterministic resolution (`resolveElement(id)`).
-4. **Local Browser State & Visible Screenshot Observation:** Background service worker coordinates observing the current active tab upon receiving `GET_BROWSER_STATE`:
-   - Captures visible-viewport screenshot via `chrome.tabs.captureVisibleTab()`.
-   - Requests sanitized page state (`url`, `title`, `viewport`, `scrollX`, `scrollY`, `dom`) from the active tab's content script.
-   - Combines both into a typed local `BrowserObservation` (`state` + `screenshot`).
+4. **Local Browser State & Visible Screenshot Observation:** Background service worker coordinates observing the current active tab upon receiving `GET_BROWSER_STATE` (captures visible viewport and local page state).
+5. **Local Privacy Engine Integration:** Background service worker coordinates local PII detection upon receiving `DETECT_SENSITIVE_REGIONS` via `@redact-eye/privacy-engine`:
+   - Evaluates active tab's `BrowserState` locally.
+   - Identifies sensitive DOM elements (`password`, `email`, `phone`, `name`) with deterministic confidence and bounding boxes.
+   - Returns structured `Detection[]` with zero network egress.
 
 > **IMPORTANT SCOPE & PRIVACY NOTICE:**
-> - **Observation is 100% Local:** Screenshots and DOM snapshots are processed strictly within the extension context and never leave the browser.
-> - **No Screenshot Upload:** Screenshots are captured to local memory only and are never uploaded or sent over the network.
-> - **No Raw Input Values Captured:** User-entered values from inputs and textareas are never collected (`value: undefined`). Passwords and credential fields are flagged as `sensitive: true`.
+> - **100% Local Evaluation:** Detection and privacy analysis occur entirely inside the extension context.
+> - **No Raw Input Values Extracted:** User-entered values from inputs and textareas are never collected (`value: undefined`). Sensitive detection objects do not contain raw values.
 > - **No Storage/Cookie Access:** Does not read `document.cookie`, `localStorage`, or `sessionStorage`.
 > - **Zero Network Requests:** No data is sent over the network or transmitted to any backend.
-> - **Deferred Features:** OCR, PII detection/redaction, VLM/agent planning, and browser action execution are **intentionally deferred to subsequent checkpoints**.
+> - **Deferred Features:** OCR, face detection, visual image redaction, VLM/agent planning, and browser action execution are **intentionally deferred to subsequent checkpoints**.
 
 ---
 
@@ -37,7 +37,7 @@ apps/extension/
 │   │   ├── PrivacyStatus.tsx         # Persistent privacy indicator
 │   │   └── Composer.tsx              # Input field & submission button
 │   └── entrypoints/
-│       ├── background.ts             # Service worker handling side panel & GET_BROWSER_STATE
+│       ├── background.ts             # Service worker handling observation & DETECT_SENSITIVE_REGIONS
 │       ├── content.ts                # Content script exposing local DOM & browser state
 │       └── sidepanel/
 │           ├── index.html            # Side panel HTML entrypoint
@@ -45,9 +45,10 @@ apps/extension/
 │           ├── style.css             # Light, minimal, accessible CSS styles
 │           └── App.tsx               # Root component & local state machine
 ├── tests/
+│   ├── privacy-engine.test.ts        # Checkpoint 8 privacy engine & PII detection tests
 │   ├── browser-state.test.ts         # Checkpoint 7 browser state, screenshot & coordinator tests
-│   ├── dom-extraction.test.ts        # DOM extraction, security, stability & resolution tests
-│   └── sidepanel.test.tsx            # Side panel UI component tests
+│   ├── dom-extraction.test.ts        # Checkpoint 6 DOM extraction, security, stability & resolution tests
+│   └── sidepanel.test.tsx            # Checkpoint 5 side panel UI component tests
 ├── wxt.config.ts                     # WXT Manifest V3 configuration (aliases, permissions)
 ├── vitest.config.ts                  # Vitest configuration (jsdom)
 ├── package.json
@@ -70,7 +71,11 @@ The extension uses Chrome Manifest V3:
     2. Enforces restrictions on internal browser pages (`chrome://`, `devtools://`, etc.).
     3. Captures visible viewport screenshot via `chrome.tabs.captureVisibleTab()`.
     4. Requests local `BrowserState` from the active tab's content script (`GET_BROWSER_STATE`).
-    5. Returns structured `{ success: true, state, screenshot, tabId }` or structured error code.
+    5. Returns structured `{ success: true, state, screenshot, tabId }`.
+  - Handles extension-internal message `DETECT_SENSITIVE_REGIONS`:
+    1. Obtains active tab browser state.
+    2. Runs `@redact-eye/privacy-engine`'s `detectSensitiveRegions(state)` locally.
+    3. Returns structured `{ success: true, detections, state }`.
 - `content.ts`: Injected into web pages (`<all_urls>`) to handle extension-internal runtime messages:
   - `GET_BROWSER_STATE` $\rightarrow$ returns metadata + `DOMSnapshot`.
   - `GET_DOM_SNAPSHOT` $\rightarrow$ returns `DOMSnapshot`.
