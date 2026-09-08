@@ -1,0 +1,15 @@
+{
+  "name": "@redact-eye/browser-utils",
+  "version": "0.1.0",
+  "description": "Browser utilities, DOM extraction, and element resolution for RedactEye",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@redact-eye/shared-types": "file:../shared-types"
+  }
+}
