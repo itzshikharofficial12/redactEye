@@ -17,7 +17,7 @@ export default defineConfig({
     name: 'RedactEye',
     description: 'Privacy-preserving browser visual agent',
     version: '0.1.0',
-    permissions: ['sidePanel'],
+    permissions: ['sidePanel', 'activeTab'],
     action: {
       default_title: 'Open RedactEye Side Panel',
     },
