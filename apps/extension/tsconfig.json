@@ -1,6 +1,13 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@redact-eye/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@redact-eye/shared-types/*": ["../../packages/shared-types/src/*"],
+      "@redact-eye/browser-utils": ["../../packages/browser-utils/src/index.ts"],
+      "@redact-eye/browser-utils/*": ["../../packages/browser-utils/src/*"]
+    }
   }
 }
