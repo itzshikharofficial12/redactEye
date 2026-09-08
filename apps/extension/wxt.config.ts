@@ -10,6 +10,7 @@ export default defineConfig({
       alias: {
         '@redact-eye/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
         '@redact-eye/browser-utils': path.resolve(__dirname, '../../packages/browser-utils/src'),
+        '@redact-eye/privacy-engine': path.resolve(__dirname, '../../packages/privacy-engine/src'),
       },
     },
   }),

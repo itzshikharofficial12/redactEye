@@ -7,7 +7,9 @@
       "@redact-eye/shared-types": ["../../packages/shared-types/src/index.ts"],
       "@redact-eye/shared-types/*": ["../../packages/shared-types/src/*"],
       "@redact-eye/browser-utils": ["../../packages/browser-utils/src/index.ts"],
-      "@redact-eye/browser-utils/*": ["../../packages/browser-utils/src/*"]
+      "@redact-eye/browser-utils/*": ["../../packages/browser-utils/src/*"],
+      "@redact-eye/privacy-engine": ["../../packages/privacy-engine/src/index.ts"],
+      "@redact-eye/privacy-engine/*": ["../../packages/privacy-engine/src/*"]
     }
   }
 }
